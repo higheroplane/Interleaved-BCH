@@ -5,9 +5,11 @@
 #include <ctime> 
 #include <cstdlib>
 
-#define N 100
-#define M 7
-#define K 80
+const int N = 30;
+const int M = 5;
+const int K = 20;
+const int L = 1; 
+const int T = (N - K)*L / (L + 1);
 
 int hamm_dist (int * w, int size)
 {
@@ -17,53 +19,83 @@ int hamm_dist (int * w, int size)
 }
 
 
-const int _MAX_ITER = 100;
+const int _MAX_ITER = 10000;
 
 int main ()
 {
     BCH code (M, N, K);
 
-    code.dump ();
+    //code.dump ();
 
-    int errv[N] = {};
+    printf ("<<%d>>\n", N-K);
 
-    for (int k = 0; k < 5; k ++) errv[rand()%N] = 1; 
-
-    code.decoder(errv);
-    //return 0;
-
-    int stats [N+1][2] = {};
-
+    int ** errv = new int* [L];
+    for (int i = 0; i < L; i ++) errv [i] = (int*)calloc (N, sizeof (int));
     srand(time(NULL));
-
-    for (int i = 0; i < _MAX_ITER; i ++)
+    int loc [T] = {};
+    for (int k = 0; k < T; k ++) loc [k] = rand()%N; 
+    for (int i = 0; i < L; i ++)
     {
-        if (i % (_MAX_ITER / 20) == 0) printf ("%d\n", i);
-        
-        for (int j = 0; j < N/2; j ++) 
+        for (int j = 0; j < T; j ++)
         {
-            for (int k = 0; k < N; k ++) errv[k] = 0;
-            for (int k = 0; k < j; k ++) errv[rand()%N] = 1; 
-            int res = code.decoder(errv);
-            int weight = hamm_dist(errv, N);
-            stats [weight][res] ++;
+            errv [i][loc[j]]= rand()%2;
         }
-        for (int j = N/2; j <= N; j ++) 
-        {
-            for (int k = 0; k < N; k ++) errv[k] = 1;
-            for (int k = 0; k < N - j; k ++) errv[rand()%N] = 0; 
-            int res = code.decoder(errv);
-            int weight = hamm_dist(errv, N);
-            stats [weight][res] ++;
-        }
-        
-
     }
 
-    FILE * out = fopen ("res.txt", "wb");
-    for (int i = 0; i < N + 1; i ++) fprintf ( out, "%d %lf %lf \n", i,
-                                     (double)stats[i][1] / ((double)stats[i][1] + (double)stats[i][0]), 
-                                     (double)stats[i][0]/ ((double)stats[i][1] + (double)stats[i][0]));
+    for (int i = 0; i < L; i ++)
+    {
+        for (int j = 0; j < N; j ++)
+        {
+            printf ("%d", errv [i][j]);
+        }
+
+        printf ("\n");
+    }
+
+    for (int i = 0; i < L; i ++) printf ("%d\n", code.decoder(errv[i]));
+
+
+    code.collaborative_decoder (errv, L);
     
     return 0;
+}
+
+int rain ()
+{
+    BCH code (M, N, K);
+
+    int errv[N] = {};
+    int errv1[N] = {};
+
+    errv [8] = errv[1] = errv[2] = errv [7] = errv [3] = 1;
+
+    std::cout << code.syndrome(errv) << "\n";
+
+    //errv [0] = errv[1] = errv[2] = errv [7] = errv [3] = 0;
+
+    errv1 [8] = errv1[1] = errv1[2] = errv1 [5] = errv1 [6] = 1;
+
+
+
+    std::cout << code.syndrome(errv1)  << "\n";
+
+    galois::GaloisFieldElement prod [4];
+    galois::GaloisFieldElement inner_prod;
+
+    for (int i = 0; i < 4; i ++) {prod [i] = (code.syndrome(errv1).poly[i]^2) * (code.syndrome(errv).poly[i] ^2); inner_prod += prod[i];}
+
+    galois::GaloisFieldPolynomial product (code.g->field(), 3, prod);
+
+    std::cout << product << "\n";
+
+    
+    std::cout << inner_prod << "\n";
+    
+
+    errv [7] = errv [3] = 0;
+
+    std::cout << code.syndrome(errv) << "\n";
+
+    return 0;
+
 }

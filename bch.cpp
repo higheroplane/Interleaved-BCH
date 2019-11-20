@@ -2,12 +2,14 @@
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/io.hpp>
 #include "sourceCode/galois/GaloisField.h"
 #include "sourceCode/galois/GaloisFieldElement.h"
 #include "sourceCode/galois/GaloisFieldPolynomial.h"
 #include "bch.h"
 
-BCH::BCH (int _m, int _n, int _k): m(_m), n(_n), k(_k), d(n - k + 1), t (d/2) 
+BCH::BCH (int _m, int _n, int _k): m(_m), n(_n), k(_k), d(n - k + 1) 
 {
     
     assert (d < n/2);
@@ -101,7 +103,7 @@ galois::GaloisFieldPolynomial min_poly (galois::GaloisFieldElement a)
 int BCH::decoder (int * errors)
 {
     assert (errors);
-
+    int t = d/2;
 
     // Reading error vector
     galois::GaloisFieldElement * er = new galois::GaloisFieldElement [n];
@@ -166,11 +168,165 @@ int BCH::decoder (int * errors)
 
 }
 
+galois::GaloisFieldPolynomial BCH::syndrome (int * errors)
+{
+
+    // Reading error vector
+    galois::GaloisFieldElement * er = new galois::GaloisFieldElement [n];
+    assert (er);
+    //printf ("decoding HENLO!%d %d %d!\n", n, k, t);
+    for (int i = 0; i < n; i ++) 
+    {
+        //printf ("it %d init \n", i);
+        if (errors [i] == 1) er [i] = galois::GaloisFieldElement(gf, 1);
+        else                 er [i] = galois::GaloisFieldElement(gf, 0);
+    }
+    galois::GaloisFieldPolynomial e (gf, n - 1, er);
+
+    //std::cout << "Recieved word = " << e << "\n";
+
+
+    // Preparing roots array
+   // galois::GaloisFieldElement * roots = new galois::GaloisFieldElement [2*t];
+    //for (int i = 1; i <= 2*t; i ++) {roots [i-1] = (*a)^i; std::cout << ((*a)^i).index() << i << "\n";}
+
+
+    // Calculating syndrome
+    galois::GaloisFieldElement * S = new galois::GaloisFieldElement [gf -> size()];
+    for (int i = 0; i < gf -> size(); i ++) S[i] = galois::GaloisFieldElement (gf, 0);
+    for (int i = 0; i < 2 * (d/2); i ++) {S[i] = e ((*a)^(i+1)); 
+    /*std::cout << "S[" << roots[i].index() << "] = " << S[roots[i].index()] << "\n";*/}
+    galois::GaloisFieldPolynomial Sz  (gf, gf -> size()-1, S);
+    Sz.simplify();
+
+    return Sz;
+
+}
+
 void BCH::dump ()
 {
     printf ("This is BCH (%d, %d, %d)\n", n, k, d);
 
     std::cout << "g(x) =" << *g << "\n";
     std::cout << "alpha =" << *a << "\n";
+
+}
+
+
+
+int BCH::collaborative_decoder (int ** error, int l)
+{
+    int t = l*(n-k) / (l + 1);
+
+    galois::GaloisFieldPolynomial * S = new galois::GaloisFieldPolynomial [l];
+    for (int i = 0; i < l; i ++) S[i] = syndrome (error[i]);
+
+    galois::GaloisFieldElement z[1] = {galois::GaloisFieldElement (gf, 0)};
+    galois::GaloisFieldElement o[1] = {galois::GaloisFieldElement (gf, 1)};
+    galois::GaloisFieldElement x[2] = {galois::GaloisFieldElement (gf, 0), galois::GaloisFieldElement (gf, 1)};
+    galois::GaloisFieldPolynomial zero (gf, 0, z);
+    galois::GaloisFieldPolynomial one  (gf, 0, o);
+    galois::GaloisFieldPolynomial xx  (gf, 1, x);
+
+    boost::numeric::ublas::matrix<galois::GaloisFieldElement> * SS = new boost::numeric::ublas::matrix<galois::GaloisFieldElement> [l];
+    boost::numeric::ublas::vector<galois::GaloisFieldElement> * ss = new boost::numeric::ublas::vector<galois::GaloisFieldElement> [l];
+
+    printf ("t = %d\n", t);
+
+    for (int i = 0; i < l; i -=- 1) 
+    {
+        SS [i] .resize (n - k - t, t);
+        ss [i] .resize (n - k - t);
+        for (int j = 0; j < SS[i].size1(); j ++)
+        {
+            if (S[i].deg () >= j + t) ss[i](j) = S[i][j + t];
+            else ss[i] (j) = galois::GaloisFieldElement (gf, 0);
+
+            for (int k = 0; k < SS[i].size2(); k ++ )  
+                if (S[i].deg () >= j + k) SS[i] (j, k) = S[i][j + k];
+                else SS[i] (j, k) = galois::GaloisFieldElement (gf, 0);
+        }
+    }
+    std::cout  <<  ss[0] << std::endl;
+    std::cout  <<  SS[0] << std::endl;
+
+    boost::numeric::ublas::vector<galois::GaloisFieldElement> Lambda (t);
+
+    Lambda = boost::numeric::ublas::solve (SS, ss);
+
+}   
+
+int BCH::collaborative_decoder_srl (int ** error, int l)
+{
+        printf ("decoding henlo!\n");
+    galois::GaloisFieldPolynomial * S = new galois::GaloisFieldPolynomial [l];
+    for (int i = 0; i < l; i ++) S[i] = syndrome (error[i]);
+
+    galois::GaloisFieldElement z[1] = {galois::GaloisFieldElement (gf, 0)};
+    galois::GaloisFieldElement o[1] = {galois::GaloisFieldElement (gf, 1)};
+    galois::GaloisFieldElement x[2] = {galois::GaloisFieldElement (gf, 0), galois::GaloisFieldElement (gf, 1)};
+    galois::GaloisFieldPolynomial zero (gf, 0, z);
+    galois::GaloisFieldPolynomial one  (gf, 0, o);
+    galois::GaloisFieldPolynomial xx  (gf, 1, x);
+
+    int te = 0;
+    galois::GaloisFieldPolynomial elp(one);
+    galois::GaloisFieldElement delta (gf, 0);
+
+    int * t_l = new int [l];
+    int * ms = (int*) calloc (l, sizeof (int));
+    galois::GaloisFieldPolynomial * elps = new galois::GaloisFieldPolynomial [l];
+    galois::GaloisFieldElement * deltas = new galois::GaloisFieldElement [l];
+    galois::GaloisFieldElement * xm = new galois::GaloisFieldElement [m];
+    for (int i = 0; i < l; i ++) {elps [i] = zero; t_l[i] = 0; deltas[i] = galois::GaloisFieldElement (gf, 1);}
+    galois::GaloisFieldPolynomial x_m (one);
+
+    //printf ("cycle starr\n");   
+    for (int mi = 0; mi < n - k; mi ++)
+    {
+        
+ //getchar();
+        for (int li = 0; li < l; li ++)
+        {
+            std::cout << "elp:" << elp << " t: " << te << "\n\n";
+            
+            if (mi - te > 0)
+            {
+                galois::GaloisFieldElement sum (gf, 0);
+                for (int i = 0; i < te; i ++) {if (elp.deg() > i && S[li].deg() > mi - i - 1) sum += elp[i]*S[li][mi - i - 1];}
+                delta = S[li][mi] + sum;
+                if (delta != galois::GaloisFieldElement (gf, 0))
+                {
+                    if (mi - ms[li] <= te - t_l[li])
+                    {
+                        //std::cout << "loook" << (xx^(mi - ms[li])) << "\n";
+                        elp = elp - (delta/deltas[li]) * elps[li] * xx^(mi - ms[li]);
+                    }
+                    else
+                    {
+                        //std::cout << "loook" << (xx^(mi - ms[li])) << "\n";
+                        int tt = te; galois::GaloisFieldPolynomial telp (elp);
+                        elp = elp - (delta/deltas[li])*elps[li] * xx^(mi - ms[li]);
+                        te = mi + t_l[li] - ms[li];
+                        t_l[li] = tt; elps[li] = telp;
+                        deltas[li] = delta; ms[li] = mi;
+
+                    }
+                }
+            }
+            //printf ("end\n");
+        }
+        
+        //std::cout << xx << "\n";
+    }
+
+    std::cout << "t: " << te << " elp: " << elp << "\n";
+    for (int i = 0; i < n; i ++)
+    {
+        if (elp ((*a)^(gf -> size()  - i)) == galois::GaloisFieldElement (gf, 0)) {std::cout << "e"; }
+        else std::cout << "0"; 
+    }
+
+
 
 }

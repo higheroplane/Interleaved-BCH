@@ -84,6 +84,7 @@ namespace galois
        void simplify(GaloisFieldPolynomial& polynomial);
 
        GaloisField* gf;
+       public:
        std::vector< GaloisFieldElement > poly;
    };
 
