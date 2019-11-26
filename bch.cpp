@@ -2,12 +2,18 @@
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
+#include "bch.h"
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
+#include <boost/numeric/ublas/lu.hpp>
+#include <boost/numeric/ublas/tags.hpp>
+
 #include "sourceCode/galois/GaloisField.h"
 #include "sourceCode/galois/GaloisFieldElement.h"
 #include "sourceCode/galois/GaloisFieldPolynomial.h"
-#include "bch.h"
+
+#include "linalg.h"
+
 
 BCH::BCH (int _m, int _n, int _k): m(_m), n(_n), k(_k), d(n - k + 1) 
 {
@@ -213,7 +219,6 @@ void BCH::dump ()
 }
 
 
-
 int BCH::collaborative_decoder (int ** error, int l)
 {
     int t = l*(n-k) / (l + 1);
@@ -247,14 +252,46 @@ int BCH::collaborative_decoder (int ** error, int l)
                 else SS[i] (j, k) = galois::GaloisFieldElement (gf, 0);
         }
     }
-    std::cout  <<  ss[0] << std::endl;
-    std::cout  <<  SS[0] << std::endl;
+
 
     boost::numeric::ublas::vector<galois::GaloisFieldElement> Lambda (t);
 
-    Lambda = boost::numeric::ublas::solve (SS, ss);
+    Mat SynMat = vconcat (SS, l);
+    Vec SynVec = vconcat (ss, l); 
+
+    std::cout  <<  SynMat << std::endl;
+    std::cout  <<  SynVec << std::endl;
+
+    Mat L (t, t); Mat U (t, t);
+
+    for (int i = 0; i < t; i ++)
+        for (int j = 0; j < t; j ++) U (i, j) = L(i, j) = galois::GaloisFieldElement (gf, 0);
+
+    LUdecomposition (SynMat, L, U, t);
+
+
+    Lambda = solve (L, SynVec, boost::numeric::ublas::lower_tag());
+    Lambda = solve (U, Lambda, boost::numeric::ublas::upper_tag());
+
+    
+
+    std::cout  << Lambda << std::endl;
+
+    galois::GaloisFieldElement * elp = new galois::GaloisFieldElement [t+1];
+    elp [0] = galois::GaloisFieldElement (gf, 1);
+    for (int i = 1; i < t+1; i ++) elp [i] = Lambda (t - i);
+    galois::GaloisFieldPolynomial ELP (gf, t, elp);
+
+
+    for (int i = 0; i < n; i ++)
+    {
+        if (ELP ((*a)^(gf -> size()  - i)) == galois::GaloisFieldElement (gf, 0)) {std::cout << "e";}
+        else std::cout << 0; 
+    }
 
 }   
+
+
 
 int BCH::collaborative_decoder_srl (int ** error, int l)
 {

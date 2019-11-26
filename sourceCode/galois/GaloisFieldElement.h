@@ -36,6 +36,7 @@ namespace galois
 
        GaloisFieldElement(GaloisField* _gf = NULL, GFSymbol v = -1);
        GaloisFieldElement(const GaloisFieldElement& gfe);
+       GaloisFieldElement(const int num);
       ~GaloisFieldElement(){}
 
        inline GaloisFieldElement& operator=(const GaloisFieldElement& gfe)
@@ -201,6 +202,7 @@ namespace galois
       private:
 
        GaloisField* gf;
+       static GaloisField * last_gf;
        GFSymbol     poly_value;
 
    };

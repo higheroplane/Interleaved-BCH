@@ -8,7 +8,7 @@
 const int N = 30;
 const int M = 5;
 const int K = 20;
-const int L = 1; 
+const int L = 4; 
 const int T = (N - K)*L / (L + 1);
 
 int hamm_dist (int * w, int size)

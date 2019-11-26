@@ -1,6 +1,13 @@
+
+#ifndef BCH_GUARD
+#define BCH_GUARD
+
 #include "sourceCode/galois/GaloisField.h"
 #include "sourceCode/galois/GaloisFieldElement.h"
 #include "sourceCode/galois/GaloisFieldPolynomial.h"
+
+
+typedef galois::GaloisField GF;
 
 class BCH
 {
@@ -34,4 +41,10 @@ class BCH
 };
 
 galois::GaloisFieldPolynomial min_poly (galois::GaloisFieldElement a);
+
+#endif
+
+
+
+
 
