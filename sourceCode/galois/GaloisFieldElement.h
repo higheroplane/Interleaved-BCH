@@ -109,6 +109,7 @@ namespace galois
 
        inline GaloisFieldElement& operator/=(const GFSymbol& v)
        {
+
           poly_value = gf->div(poly_value,v);
           return *this;
        }

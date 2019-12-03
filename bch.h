@@ -6,8 +6,9 @@
 #include "sourceCode/galois/GaloisFieldElement.h"
 #include "sourceCode/galois/GaloisFieldPolynomial.h"
 
-
 typedef galois::GaloisField GF;
+typedef galois::GaloisFieldElement GFE;
+typedef galois::GaloisFieldPolynomial GFP;
 
 class BCH
 {
@@ -34,7 +35,7 @@ class BCH
 
     galois::GaloisFieldPolynomial syndrome (int * error);
 
-    int * gen_poly();
+    void gen_poly();
     
 
 

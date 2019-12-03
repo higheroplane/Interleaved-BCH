@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-c -Wall -std=c++11
+CFLAGS=-c -std=c++11
 LDFLAGS=
 SOURCES=main.cpp bch.cpp linalg.cpp sourceCode/galois/GaloisFieldPolynomial.cpp sourceCode/galois/GaloisFieldElement.cpp sourceCode/galois/GaloisField.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
@@ -12,3 +12,6 @@ $(EXECUTABLE): $(OBJECTS)
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@
+
+clean:
+	rm -rf *.o

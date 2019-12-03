@@ -23,5 +23,9 @@ Vec mul (Mat A, Vec b);
 Vec solve_tr (Mat A, Vec b, int type);
 Mat vconcat (Mat* Ms, int n);
 Vec vconcat (Vec* Ms, int n);
+bool is_null (Vec v);
+galois::GaloisFieldElement det (Mat A);
+bool is_full_rank (Mat A);
+int polytriangular_submatrix (Mat& A, Vec& v, Mat*, Vec*, int*); //of full-rank martix
 
 #endif
