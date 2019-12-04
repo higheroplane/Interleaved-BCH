@@ -70,9 +70,9 @@ BCH::BCH (int _m, int _n, int _k): m(_m), n(_n), k(_k), d(n - k + 1)
 
     gen_poly ();
 
-    //std::cout << "Generator: " << g -> deg() << "\n";    
+    std::cout << "Generator: " << g -> deg() << "\n";    
 
-    //printf ("BCH (%d, %d, %d) seems to be built", n, k, d);
+    printf ("BCH (%d, %d, %d) seems to be built", n, k, d);
 
 }
 
@@ -225,7 +225,7 @@ inline bool BCH::is_valid (GFP p)
     return p.deg() == roots ? true : false;
 }
 
-int BCH::collaborative_decoder (int ** error, int l)
+int BCH::collaborative_decoder (std::vector<int*>& error, int l)
 {
     int t = l*(n-k) / (l + 1);
 

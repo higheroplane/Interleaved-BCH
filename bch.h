@@ -34,7 +34,7 @@ class BCH
     
     int decoder (int * error);
 
-    int collaborative_decoder (int** error, int L);
+    int collaborative_decoder (std::vector<int*>& errv, int L);
     int collaborative_decoder_srl (int ** error, int l);
 
     galois::GaloisFieldPolynomial syndrome (int * error);
