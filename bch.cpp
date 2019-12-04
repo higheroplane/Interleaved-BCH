@@ -77,7 +77,7 @@ BCH::BCH (int _m, int _n, int _k): m(_m), n(_n), k(_k), d(n - k + 1)
 }
 
 
-void BCH::gen_poly()
+inline void BCH::gen_poly()
 
 {
     
@@ -88,7 +88,7 @@ void BCH::gen_poly()
     for (int i = 3; i < d; i += 2) *g *= min_poly ((*a)^i);
 }
 
-galois::GaloisFieldPolynomial min_poly (galois::GaloisFieldElement a)
+inline galois::GaloisFieldPolynomial min_poly (galois::GaloisFieldElement a)
 {
     galois::GaloisFieldElement temp [2] = {a, galois::GaloisFieldElement(a.field(), 1)};
     galois::GaloisFieldPolynomial M (a.field(), 1, temp);
@@ -174,7 +174,7 @@ int BCH::decoder (int * errors)
 
 }
 
-galois::GaloisFieldPolynomial BCH::syndrome (int * errors)
+inline galois::GaloisFieldPolynomial BCH::syndrome (int * errors)
 {
 
     // Reading error vector
@@ -218,25 +218,27 @@ void BCH::dump ()
 
 }
 
+inline bool BCH::is_valid (GFP p)
+{
+    int roots = 0;
+    for (int i = 0; i < n; i ++) if (p ((*a)^i) == GFE (gf, 0)) roots ++;
+    return p.deg() == roots ? true : false;
+}
 
 int BCH::collaborative_decoder (int ** error, int l)
 {
     int t = l*(n-k) / (l + 1);
 
-    galois::GaloisFieldPolynomial * S = new galois::GaloisFieldPolynomial [l];
+    GFP * S = new GFP [l];
     for (int i = 0; i < l; i ++) S[i] = syndrome (error[i]);
 
-    galois::GaloisFieldElement z[1] = {galois::GaloisFieldElement (gf, 0)};
-    galois::GaloisFieldElement o[1] = {galois::GaloisFieldElement (gf, 1)};
-    galois::GaloisFieldElement x[2] = {galois::GaloisFieldElement (gf, 0), galois::GaloisFieldElement (gf, 1)};
-    galois::GaloisFieldPolynomial zero (gf, 0, z);
-    galois::GaloisFieldPolynomial one  (gf, 0, o);
-    galois::GaloisFieldPolynomial xx  (gf, 1, x);
+    GFE z[1] = {GFE (gf, 0)};
+    GFE o[1] = {GFE (gf, 1)};
+    GFE x[2] = {GFE (gf, 0), GFE (gf, 1)};
+    GFP zero (gf, 0, z), one  (gf, 0, o), xx  (gf, 1, x);
 
-    boost::numeric::ublas::matrix<galois::GaloisFieldElement> * SS = new boost::numeric::ublas::matrix<galois::GaloisFieldElement> [l];
-    boost::numeric::ublas::vector<galois::GaloisFieldElement> * ss = new boost::numeric::ublas::vector<galois::GaloisFieldElement> [l];
-
-    //printf ("t = %d\n", t);
+    Mat * SS = new Mat [l];
+    Vec * ss = new Vec [l];
 
     for (int i = 0; i < l; i -=- 1) 
     {
@@ -245,16 +247,13 @@ int BCH::collaborative_decoder (int ** error, int l)
         for (unsigned int j = 0; j < SS[i].size1(); j ++)
         {
             if (S[i].deg () >= j + t) ss[i](j) = S[i][j + t];
-            else ss[i] (j) = galois::GaloisFieldElement (gf, 0);
+            else ss[i] (j) = GFE (gf, 0);
 
             for (unsigned int k = 0; k < SS[i].size2(); k ++ )  
                 if (S[i].deg () >= j + k) SS[i] (j, SS[i].size2() - 1 - k) = S[i][j + k];
-                else SS[i] (j, SS[i].size2() - 1 - k) = galois::GaloisFieldElement (gf, 0);
+                else SS[i] (j, SS[i].size2() - 1 - k) = GFE (gf, 0);
         }
     }
-
-
-    boost::numeric::ublas::vector<galois::GaloisFieldElement> Lambda (t);
 
     Mat SynMat = vconcat (SS, l);
     Vec SynVec = vconcat (ss, l); 
@@ -264,48 +263,61 @@ int BCH::collaborative_decoder (int ** error, int l)
     int * subs = (int *) calloc (l, sizeof (int));
 
     int subsystems_amount = polytriangular_submatrix (SynMat, SynVec, freq, heter, subs);
-
+    //std::cout << subsystems_amount << std::endl;
 
     Mat L (t, t); Mat U (t, t);
+    std::vector <GFP> ELP (subsystems_amount);
+    Vec Lambda (t);
 
-
-    for (int i = 0; i < t; i ++)
-        for (int j = 0; j < t; j ++) U (i, j) = L(i, j) = galois::GaloisFieldElement (gf, 0);
-
-    LUdecomposition (freq [0], L, U, t);
-
-    GFE det_l = GFE (gf, 1), det_u = GFE (gf, 1);
-    for (int i = 0; i < t; i ++) {det_l *= L (i, i); det_u *= U (i, i); /*std::cout << L(i,i) << " " << U (i,i) << std::endl;*/}
-    GFE det = det_l * det_u;
-
-    //std::cout << "det S = " << det << std::endl;
-
-
-    Lambda = solve (L, heter[0], boost::numeric::ublas::lower_tag());
-    Lambda = solve (U, Lambda, boost::numeric::ublas::upper_tag());
-
-    //Mat A = nonsingular_submatrix (SynMat);
-
-    //std::cout  << SynMat << std::endl;
-    //std::cout  << A << std::endl;
-
-    galois::GaloisFieldElement * elp = new galois::GaloisFieldElement [t+1];
-    elp [0] = galois::GaloisFieldElement (gf, 1);
-    for (int i = 1; i < t+1; i ++) elp [i] = Lambda (i-1);
-    galois::GaloisFieldPolynomial ELP (gf, t, elp);
-
-    ELP.simplify();
-
-    std::cout << ELP << std::endl;
-
-    std::cout <<  std::endl;
-
-    for (int i = 0; i < n; i ++)
+    for (int s = 0; s < subsystems_amount; s ++)
     {
-        if (ELP ((*a)^(gf -> size()  - i)) == galois::GaloisFieldElement (gf, 0)) {std::cout << "\033[31me\033[0m";}
-        else std::cout << 0; 
-    }
+        for (int i = 0; i < t; i ++)
+            for (int j = 0; j < t; j ++) U (i, j) = L(i, j) = GFE (gf, 0);
 
+        LUdecomposition (freq [s], L, U, t);
+
+        GFE det_l = GFE (gf, 1), det_u = GFE (gf, 1);
+        for (int i = 0; i < t; i ++) {det_l *= L (i, i); det_u *= U (i, i); /*std::cout << L(i,i) << " " << U (i,i) << std::endl;*/}
+        GFE det = det_l * det_u;
+
+        Lambda = solve (L, heter[s], boost::numeric::ublas::lower_tag());
+        Lambda = solve (U, Lambda, boost::numeric::ublas::upper_tag());
+
+        galois::GaloisFieldElement * elp = new galois::GaloisFieldElement [t+1];
+        elp [0] = galois::GaloisFieldElement (gf, 1);
+        for (int i = 1; i < t+1; i ++) elp [i] = Lambda (i-1);
+        ELP[s] = GFP (gf, t, elp);
+
+        ELP[s].simplify();
+    }
+    //std::cout << ELP[0] << std::endl;
+    //std::cout << ELP[4] << std::endl;
+
+    //std::cout <<  std::endl;
+
+    for (int i = 1; !is_valid (ELP[i-1]); i ++) if (i == subsystems_amount) return DECODING_FAILURE;
+
+    for (int i = 0; !is_valid (ELP[0]) && i < subsystems_amount; i ++) ELP [0] = ELP [i];
+    for (int i = 1; i < subsystems_amount; i ++) if (is_valid (ELP[i]) && ELP [i].deg() > ELP [0].deg()) ELP [0] = ELP [i];
+
+    for (int i = 0; i < l; i ++)
+    {
+        int roots = 0;
+        //printf ("line[%d]: ", i);
+        for (int j = 0; j < n; j ++)
+        {
+            if (ELP[0] ((*a)^(gf -> size()  - j)) == galois::GaloisFieldElement (gf, 0)) {}//printf ("\033[34m%d\033[0m", error [i][j]);
+
+            else 
+            {
+                if (error [i][j] == 1) return DECODING_ERROR;
+                else std::cout << error [i][j];
+            } 
+        }
+        if (is_valid (ELP[0])) printf (" val");
+        //printf ("\n");
+    }
+    return DECODING_SUCCESS;
 }   
 
 

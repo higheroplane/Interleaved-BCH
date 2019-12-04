@@ -2,6 +2,10 @@
 #ifndef BCH_GUARD
 #define BCH_GUARD
 
+#define DECODING_FAILURE -1
+#define DECODING_SUCCESS 0
+#define DECODING_ERROR 1
+
 #include "sourceCode/galois/GaloisField.h"
 #include "sourceCode/galois/GaloisFieldElement.h"
 #include "sourceCode/galois/GaloisFieldPolynomial.h"
@@ -14,7 +18,7 @@ class BCH
 {
     private:
     const int m, n, k, d;
-
+    bool is_valid (GFP);
     galois::GaloisField * gf;
     galois::GaloisFieldElement * a;
     //galois::GaloisFieldPolynomial * g;

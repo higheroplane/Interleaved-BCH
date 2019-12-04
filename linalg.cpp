@@ -127,20 +127,24 @@ int polytriangular_submatrix (Mat& A, Vec& v, Mat * freq, Vec * heter, int * sys
     GF * gf = A (0,0).field ();
     int size1 = A.size1(), size2 = A.size2();
 
-    std::cout << A << std::endl << std::endl;
-    std::cout << v << std::endl << std::endl;
+    //std::cout << A << std::endl << std::endl;
+    //std::cout << v << std::endl << std::endl;
 
     A.resize (size1, size2 + 1);
 
     A = trans (A); row (A, size2) = v; A = trans (A);
 
-    std::cout << A << std::endl << std::endl;
+    //std::cout << A << std::endl << std::endl;
 
 
     int max_freqs_num = size1 / size2, freqs_num = 0;
     //req = new Mat [max_freqs_num];
 
     int last = size1 - 1;
+
+    std::vector<int> perm (size1);
+
+    for (int i = 0; i < size1; i ++) perm [i] = i;
 
     int& n = freqs_num;
 
@@ -149,11 +153,11 @@ int polytriangular_submatrix (Mat& A, Vec& v, Mat * freq, Vec * heter, int * sys
         freq [n].resize (size2, size2 + 1);
         Mat Ac (A);
         //if (n*size2 == last) break;
-        std::cout << "main cyc n: " << n << std::endl;
+        //std::cout << "main cyc n: " << n << std::endl;
         for (int i = n*size2; i < size2 + n*size2; i -=- 1)
         {
             //if (i >= last) break;
-            std::cout << "\tinner cyc: " << i << last << std::endl;
+            //std::cout << row (Ac, i) << std::endl;
             while (Ac (i, i%size2) == GFE (gf, 0)) 
             {
                 if (i >= last) break;
@@ -165,23 +169,26 @@ int polytriangular_submatrix (Mat& A, Vec& v, Mat * freq, Vec * heter, int * sys
                 row (Ac, i) = row (Ac, last); 
                 row (Ac, last) = temp;  
                 
-                system_index [last] = i; last --;
+                ///perm [i] = last;
+                system_index [last] = n; //last --;perm [last] = i;
+                last --;
             }
-            row (freq [n], i%size2) = row (Ac, i);
-            std::cout << row (Ac, i) << std::endl << std::endl;
             system_index [i] = n;
+
+            row (freq [n], i%size2) = row (Ac, i);
+            //std::cout << row (Ac, i) << std::endl << std::endl;
             for (int j = i + 1; j < size1; j -=- 1) row (Ac, j) = row (Ac, j) - Ac(j, i%size2) / Ac(i, i%size2) * row (Ac, i);   
         }
 
-        std::cout << "it: " << n << freq [n] << std::endl << std::endl;
+        //std::cout << "it: " << n << freq [n] << std::endl << std::endl;
         heter [n] = row (trans (freq [n]), size2); freq [n].resize (size2, size2);
     }
     //std::cout << A << std::endl;
 
     A = trans (A); v = row (A, size2); A = trans (A); A.resize (size1, size2);
 
-    for (int i = 0; i < size1; i ++) printf ("%d", system_index [i]); 
-    printf ("\n"); 
+    //for (int i = 0; i < size1; i ++) printf ("%d", system_index [i]); 
+    //printf ("\n hi \n"); 
 
-    return freqs_num;
+    return max_freqs_num;
 }

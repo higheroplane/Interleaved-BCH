@@ -10,9 +10,9 @@ const int N = 31;
 const int M = 5;
 const int K = 21;
 const int L = 70; 
-const int T = (N - K)*L / (L + 1);
+const int T = (N - K)*L / (L + 1) * 2;
 
-int hamm_dist (int * w, int size)
+inline int hamm_dist (int * w, int size)
 {
     int weight = 0;
     for (int i = 0; i < size; i ++) if (w[i] != 0) weight ++; 
@@ -28,21 +28,23 @@ int main ()
 
     //code.dump ();
 
-    printf ("<<%d>>\n", T);
+    //printf ("<<%d>>\n", T);
 
     int ** errv = new int* [L];
     for (int i = 0; i < L; i ++) errv [i] = (int*)calloc (N, sizeof (int));
-    srand(time(NULL));
-    int loc [T] = {};
-    for (int k = 0; k < T; k ++) {loc [k] = rand() % N;}
+    
+    srand (time (NULL));
+    int loc [2][T] = {};
+    for (int k = 0; k < T; k ++) {loc [0][k] = rand() % N;}
+    for (int k = 0; k < T; k ++) {loc [1][k] = rand() % N;}
 
     qsort(loc, T, sizeof(int), [](const void* a, const void * b) {return *static_cast<const int*>(a) - *static_cast<const int*>(b);});
-    //for (int k = 0; k < T; k ++) {printf ("loc [%d] = %d\n", k, loc[k]);}
+
     for (int i = 0; i < L; i ++)
     {
         for (int j = 0; j < T; j ++)
         {
-            errv [i][loc[j]]= rand()%2;
+            errv [i][loc[0][j]]= rand()%2;
         }
     }
 
@@ -52,16 +54,18 @@ int main ()
         int k = 0;
         for (int j = 0; j < N; j ++)
         {
-            if (j == loc [k] && k < T) {printf ("\033[31m%d\033[0m", errv [i][j] ); while (loc[k] == loc [k + 1]) k ++; k++;}
-            else printf ("%d", errv [i][j]);
+            if (j == loc[i/(L/2)] [k] && k < T) 
+            {
+                //printf ("\033[31m%d\033[0m", errv [i][j] );
+                while (loc[i%(L/2)][k] == loc [i/(L/2)][k + 1]) k ++; k++;
+            }
+            //else printf ("%d", errv [i][j]);
         }
-        printf ("\n");
+       // printf ("\n");
     }
 
-    //for (int i = 0; i < L; i ++) printf ("%d\n", code.decoder(errv[i]));
 
-
-    code.collaborative_decoder (errv, L);
+    //printf ("result of decoding is %d", code.collaborative_decoder (errv, L));
     
     return 0;
 }
