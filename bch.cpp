@@ -15,6 +15,23 @@
 #include "linalg.h"
 
 
+/*
+TODO:
+
+Make couple pipelines of decoding. Test on two types of distributions.
+
+Pipelines:
+
+Max (?) good system for all.
+0-1-2-t collabs.
+Max systems!! (exp -> poly complexity, check if NP-hard)
+Use algebraic properties (start from lemma in Sidorenko).
+Specified randomized choices. (f (error_dist))
+
+
+*/
+
+
 BCH::BCH (int _m, int _n, int _k): m(_m), n(_n), k(_k), d(n - k + 1) 
 {
     
@@ -337,7 +354,20 @@ int BCH::collaborative_decoder (std::vector<int*>& error, int l)
     return DECODING_SUCCESS;
 }   
 
+/*int BCH::collaborative_decoder (std::vector<int*>& error)
+{
+    int l = error.size();
+    int T  = l * (n-k) / (l + 1);
+    int t = (n - k) / 2;
 
+    GFP * S = new GFP [l];
+    for (int i = 0; i < l; i ++) S[i] = syndrome (error[i]);
+
+    GFE z[1] = {GFE (gf, 0)};
+    GFE o[1] = {GFE (gf, 1)};
+    GFE x[2] = {GFE (gf, 0), GFE (gf, 1)};
+    GFP zero (gf, 0, z), one  (gf, 0, o), xx  (gf, 1, x);
+}*/
 
 int BCH::collaborative_decoder_srl (int ** error, int l)
 {

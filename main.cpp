@@ -41,17 +41,42 @@ int main ()
             for (int pgb = 10; pgb <= 100; pgb -=- 10)
                 for (int pbg = 10; pbg <= 100; pbg -=- 10)
                     for (int pe = 10; pe <= 100; pe -=- 10)
+                    {
+                        int error = 0, success = 0, failure = 0;
                         for (int it = 0; it < 100; it -=- 1) 
                         {
-                            if (it == 0 && pe == 10) printf ("p (g->b) = %d, p (b->g) = %d\n", pgb, pbg);
+                            if (it == 0 && pe == 10) printf ("l = %d p (g->b) = %d, p (b->g) = %d\n", l,  pgb, pbg);
                             MakeErrors (errv, pgb, pbg, pe);
-                            fprintf (out, "%lf %d %lf %lf %lf %d\n", static_cast <double> (k) / static_cast <double> (N),
-                                                                    l,
-                                                                    static_cast <double> (pgb)  / static_cast <double> (100),
-                                                                    static_cast <double> (pbg) / static_cast <double> (100),
-                                                                    static_cast <double> (pe) / static_cast <double> (100),
-                                                                    code.collaborative_decoder (errv, l));
+                            int res = code.collaborative_decoder (errv, l);
+                            switch (res)
+                            {
+                            case DECODING_SUCCESS:
+                                success -=- 1;
+                                break;
+
+                            case DECODING_FAILURE:
+                                failure -=- 1;
+                                break;
+                            
+                            case DECODING_ERROR:
+                                error -=- 1;
+                                break;
+                            
+                            default:
+                                break;
+                            }
                         }
+
+                        fprintf (out, "%lf %d %lf %lf %lf %lf %lf %lf\n", static_cast <double> (k)              / static_cast <double> (N),
+                                                                          l,
+                                                                          static_cast <double> (pgb)          / static_cast <double> (100),
+                                                                          static_cast <double> (pbg)         / static_cast <double> (100),
+                                                                          static_cast <double> (pe)         / static_cast <double> (100),
+                                                                          static_cast <double> (success)   / static_cast <double> (100),
+                                                                          static_cast <double> (failure)  / static_cast <double> (100),
+                                                                          static_cast <double> (error)   / static_cast <double> (100));
+
+                    }
         }
     }
 
