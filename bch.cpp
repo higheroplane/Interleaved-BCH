@@ -20,7 +20,7 @@ BCH::BCH (int _m, int _n, int _k): m(_m), n(_n), k(_k), d(n - k + 1)
     
     assert (d < n/2);
     //printf ("About to start creating BCH (%d, %d, %d) code space.\n", n, k, d);
-    unsigned int * p = (unsigned int *) calloc (m+1, sizeof (int));
+    unsigned int * p = (unsigned int *) calloc (m + 1, sizeof (int));
 
     p[0] = p[m] = 1;
 
@@ -70,9 +70,9 @@ BCH::BCH (int _m, int _n, int _k): m(_m), n(_n), k(_k), d(n - k + 1)
 
     gen_poly ();
 
-    std::cout << "Generator: " << g -> deg() << "\n";    
+    //std::cout << "Generator: " << g -> deg() << "\n";    
 
-    printf ("BCH (%d, %d, %d) seems to be built", n, k, d);
+    //printf ("BCH (%d, %d, %d) seems to be built", n, k, d);
 
 }
 
@@ -80,12 +80,20 @@ BCH::BCH (int _m, int _n, int _k): m(_m), n(_n), k(_k), d(n - k + 1)
 inline void BCH::gen_poly()
 
 {
-    
     galois::GaloisFieldPolynomial M;
     galois::GaloisFieldPolynomial G;
     M = min_poly (*a);
     *g = M;
-    for (int i = 3; i < d; i += 2) *g *= min_poly ((*a)^i);
+    for (int i = 3; i < d; i += 2) 
+    {
+        M = min_poly ((*a)^i);
+        *g = *g * M / gcd (*g, M);
+    }
+
+    std::cout << "G: " << " = " << *g << "\n";
+
+
+    //for (int i = 3; i < d; i += 2) *g = *g * min_poly ((*a)^i) / gcd (*g, min_poly ((*a)^i));
 }
 
 inline galois::GaloisFieldPolynomial min_poly (galois::GaloisFieldElement a)
@@ -94,14 +102,19 @@ inline galois::GaloisFieldPolynomial min_poly (galois::GaloisFieldElement a)
     galois::GaloisFieldPolynomial M (a.field(), 1, temp);
     galois::GaloisFieldPolynomial G;
 
-    for (int i = 1; (temp[0]^2) != a; i ++) 
+    //std::cout << "root: " << M << " >> " <<temp [0].index() << std::endl;
+
+    while ((temp[0]^2) != a) 
     {
         temp [0] = temp[0]^2;
         G = galois::GaloisFieldPolynomial (a.field(), 1, temp);
+
+        //std::cout << "root: " << G << " >> " <<temp [0].index() << std::endl;
+
         M = M * G;
     }
 
-    //std::cout << "M: " << " = " << M.deg() << "\n";
+    //std::cout << "M: " << " = " << M << "\n";
     
     return M ;
 }
@@ -203,6 +216,7 @@ inline galois::GaloisFieldPolynomial BCH::syndrome (int * errors)
     for (int i = 0; i < 2 * (d/2); i ++) {S[i] = e ((*a)^(i+1)); 
     /*std::cout << "S[" << roots[i].index() << "] = " << S[roots[i].index()] << "\n";*/}
     galois::GaloisFieldPolynomial Sz  (gf, gf -> size()-1, S);
+    Sz = Sz % *g;
     Sz.simplify();
 
     return Sz;
@@ -227,7 +241,7 @@ inline bool BCH::is_valid (GFP p)
 
 int BCH::collaborative_decoder (std::vector<int*>& error, int l)
 {
-    int t = l*(n-k) / (l + 1);
+    int t = l * (n-k) / (l + 1);
 
     GFP * S = new GFP [l];
     for (int i = 0; i < l; i ++) S[i] = syndrome (error[i]);
@@ -253,17 +267,20 @@ int BCH::collaborative_decoder (std::vector<int*>& error, int l)
                 if (S[i].deg () >= j + k) SS[i] (j, SS[i].size2() - 1 - k) = S[i][j + k];
                 else SS[i] (j, SS[i].size2() - 1 - k) = GFE (gf, 0);
         }
+        //std::cout << SS[i] << "\n" << ss[i] << std::endl;
     }
 
     Mat SynMat = vconcat (SS, l);
     Vec SynVec = vconcat (ss, l); 
 
+    //std::cout << SynMat << std::endl;
+
     Mat * freq = new Mat [SynMat.size1() / SynMat.size2() + 1];
     Vec * heter = new Vec [SynMat.size1() / SynMat.size2() + 1];
-    int * subs = (int *) calloc (l, sizeof (int));
+    int * subs = (int *) calloc ((l >= SynMat.size1()) ? l : SynMat.size1() , sizeof (int));
 
     int subsystems_amount = polytriangular_submatrix (SynMat, SynVec, freq, heter, subs);
-    //std::cout << subsystems_amount << std::endl;
+    //std::cout << SynMat << std::endl;
 
     Mat L (t, t); Mat U (t, t);
     std::vector <GFP> ELP (subsystems_amount);
@@ -311,10 +328,10 @@ int BCH::collaborative_decoder (std::vector<int*>& error, int l)
             else 
             {
                 if (error [i][j] == 1) return DECODING_ERROR;
-                else std::cout << error [i][j];
+                else {}//std::cout << error [i][j];
             } 
         }
-        if (is_valid (ELP[0])) printf (" val");
+        if (is_valid (ELP[0])) {}//printf (" val");
         //printf ("\n");
     }
     return DECODING_SUCCESS;

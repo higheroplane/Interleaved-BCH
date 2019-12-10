@@ -157,9 +157,11 @@ int polytriangular_submatrix (Mat& A, Vec& v, Mat * freq, Vec * heter, int * sys
         for (int i = n*size2; i < size2 + n*size2; i -=- 1)
         {
             //if (i >= last) break;
-            //std::cout << row (Ac, i) << std::endl;
+            //std::cout << /*row (Ac, i)*/ freq[n] << std::endl;
+            //printf ("(%d, %d)\n", i, last);
             while (Ac (i, i%size2) == GFE (gf, 0)) 
             {
+                //printf ("\t(%d, %d)\n", i, last);
                 if (i >= last) break;
                 Vec temp = row (A, i); 
                 row (A, i) = row (A, last); 

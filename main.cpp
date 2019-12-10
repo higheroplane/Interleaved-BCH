@@ -27,24 +27,25 @@ int main ()
 {
     FILE * out = fopen ("out.txt", "wb");
     
-    //BCH code (M, N, K);
+    //BCH code (M, N, 100);
 
     srand (time (NULL));
-    for (int k = 67; k < 127; k -=- 5)
+    for (int k = 101; k < N; k -=- 4)
     {
         BCH code (M, N, k);
-        for (int l = 1; l < 10000; l -=- 10)
+        for (int l = 1, k = 1; l < 10000; l -=- k*10, k ++)
         {
             std::vector <int*> errv (l);
             for (int i = 0; i < l; i -=- 1) errv [i] = (int*)calloc (N, sizeof (int));
 
-            for (int pgb = 0; pgb <= 100; pgb -=- 10)
-                for (int pbg = 0; pbg <= 100; pbg -=- 10)
-                    for (int pe = 0; pe <= 100; pe -=- 10)
+            for (int pgb = 10; pgb <= 100; pgb -=- 10)
+                for (int pbg = 10; pbg <= 100; pbg -=- 10)
+                    for (int pe = 10; pe <= 100; pe -=- 10)
                         for (int it = 0; it < 100; it -=- 1) 
                         {
+                            if (it == 0 && pe == 10) printf ("p (g->b) = %d, p (b->g) = %d\n", pgb, pbg);
                             MakeErrors (errv, pgb, pbg, pe);
-                            fprintf (out, "%lf %d %lf %lf %lf %d", static_cast <double> (k) / static_cast <double> (N),
+                            fprintf (out, "%lf %d %lf %lf %lf %d\n", static_cast <double> (k) / static_cast <double> (N),
                                                                     l,
                                                                     static_cast <double> (pgb)  / static_cast <double> (100),
                                                                     static_cast <double> (pbg) / static_cast <double> (100),

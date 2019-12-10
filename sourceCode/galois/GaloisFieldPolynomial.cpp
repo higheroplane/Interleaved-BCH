@@ -649,7 +649,7 @@ namespace galois
          GaloisFieldElement ze[1] = {GaloisFieldElement (gf, 0)};
          GaloisFieldPolynomial zero (gf, 0, ze);
 
-         while ((z = y % x) != zero)
+         while ((z = y % x).deg())
          {
             y = x;
             x = z;
