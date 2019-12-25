@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <ctime> 
 #include <cstdlib>
+#include "stoch.h"
 
 
 const int N = 127;
@@ -27,6 +28,16 @@ int main ()
 {
     FILE * out = fopen ("out.txt", "wb");
     
+
+    for (int i = 0; i < 10; i ++)
+    {
+        auto v = numerical_encoder (i, 20, 9);
+        std::copy(begin(v), end(v), std::ostream_iterator<int>(std::cout, ""));
+        printf ("\n");
+    }
+   // std::cout << numerical_encoder (10, 20, 7) << std::endl;
+    return 0;
+    
     //BCH code (M, N, 100);
 
     srand (time (NULL));
@@ -45,8 +56,8 @@ int main ()
                         int error = 0, success = 0, failure = 0;
                         for (int it = 0; it < 100; it -=- 1) 
                         {
-                            if (it == 0 && pe == 10) printf ("l = %d p (g->b) = %d, p (b->g) = %d\n", l,  pgb, pbg);
-                            MakeErrors (errv, pgb, pbg, pe);
+                            if (it == 0 && pe == 10 && pbg == 10) printf ("l = %d p (g->b) = %d, p (b->g) = %d\n", l,  pgb, pbg);
+                            make_hilbert_errors (errv, pgb, pbg, pe, N);
                             int res = code.collaborative_decoder (errv, l);
                             switch (res)
                             {
@@ -84,26 +95,4 @@ int main ()
     return 0;
 }
 
-inline void MakeErrors (std::vector<int*>& errv, int pgb, int pbg, int pe)
-{
-    bool state = true;
 
-    for (int j = 0; j < N; j ++)
-    {
-        for (int i = 0; i < errv.size(); i ++)
-        {
-            if (state)
-            {
-                errv [i][j] = 0;
-                if (rand() % 100 < pgb) state = false;
-            }
-            else 
-            {
-                if (rand() % 100 < pe) errv [i][j] = 1;
-                if (rand() % 100 < pbg) state = true;
-            }
-
-        }
-    }
-
-}

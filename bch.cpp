@@ -22,12 +22,13 @@ Make couple pipelines of decoding. Test on two types of distributions.
 
 Pipelines:
 
-Max (?) good system for all.
+Max (?) good system for all. \exists
 0-1-2-t collabs.
 Max systems!! (exp -> poly complexity, check if NP-hard)
 Use algebraic properties (start from lemma in Sidorenko).
 Specified randomized choices. (f (error_dist))
 
+From end and from 
 
 */
 
