@@ -43,7 +43,7 @@ int main ()
     FILE * out = fopen ("out.txt", "wb");
     
     //printf ("%d", sizeof (unsigned long long int (9)));
-    BigInt one (std::vector <int> ({0,0,0,0,0,0,0,0,0,0,1}));
+    BigInt one (std::vector <int> ({0,0,0,0,1,0,0,0,0,0,1}));
     BigInt two (std::vector <int> ({1,1}));
     two = two * two;
     one = one * one;
@@ -53,12 +53,14 @@ int main ()
     //two.print();
     //return 0;
     srand (time (NULL));
-    for (int i = 0; i < 10; i ++)
+    int len=7, b = 3, c = 3;
+    printf ("<<%d %d %d>>\n", len, b, c);
+    for (int i = 1; i < 5; i ++)
     {
         //_BI(1+i).print();
-        auto v = enumerative_decoder_w (_BI(1+i), 60, 40);
+        auto v = enumerative_decoder_mark (_BI(1), len, b, c);
         std::copy(begin(v), end(v), std::ostream_iterator<int>(std::cout, ""));
-        printf (" %lld!\n", binom (20, 20));
+        printf (" %lld!\n", binom (2, 2));
     }
    // std::cout << numerical_encoder (10, 20, 7) << std::endl;
     
