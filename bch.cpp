@@ -194,12 +194,17 @@ int BCH::decoder (int * errors)
     //printf ("\n decoded: \n");
     for (unsigned int i = 0; i < n; i ++)
     {
-        if (sigma ((*a)^(gf -> size()  - i)) == galois::GaloisFieldElement (gf, 0)) {/*std::cout << "e";*/ error_num ++;}
-        //else std::cout << e [i]; 
+        int check = 0;
+        if (sigma ((*a)^(gf -> size()  - i)) == galois::GaloisFieldElement (gf, 0)) 
+        {
+            check = 1;
+            error_num ++;
+        }
+        if (check != errors [i]) return DECODING_ERROR; 
     }
 
-    if (error_num != sigma.deg()) {/*printf ("decoding failure");*/ return 1;}
-    else return 0;
+    if (error_num != sigma.deg()) {/*printf ("decoding failure");*/ return DECODING_FAILURE;}
+    else return DECODING_SUCCESS;
 
 
 
@@ -259,7 +264,8 @@ inline bool BCH::is_valid (GFP p)
 
 int BCH::collaborative_decoder (std::vector<int*>& error, int l)
 {
-    int t = l * (n-k) / (l + 1);
+    if (l == 1) return decoder (*error);
+    int t = l*(n-k) / (l + 1);
 
     GFP * S = new GFP [l];
     for (int i = 0; i < l; i ++) S[i] = syndrome (error[i]);
@@ -295,11 +301,11 @@ int BCH::collaborative_decoder (std::vector<int*>& error, int l)
 
     Mat * freq = new Mat [SynMat.size1() / SynMat.size2() + 1];
     Vec * heter = new Vec [SynMat.size1() / SynMat.size2() + 1];
-    int * subs = (int *) calloc ((l >= SynMat.size1()) ? l : SynMat.size1() , sizeof (int));
-
+    int * subs = (int *) calloc (SynMat.size1(), sizeof (int));
+//std::cout << SynMat << std::endl;
     int subsystems_amount = polytriangular_submatrix (SynMat, SynVec, freq, heter, subs);
-    //std::cout << SynMat << std::endl;
-
+for (int i = 0; i < subsystems_amount; i ++ ) std::cout << *(freq + i) << std::endl;
+//std::cout << SynMat << std::endl;
     Mat L (t, t); Mat U (t, t);
     std::vector <GFP> ELP (subsystems_amount);
     Vec Lambda (t);
@@ -330,7 +336,7 @@ int BCH::collaborative_decoder (std::vector<int*>& error, int l)
 
     //std::cout <<  std::endl;
 
-    for (int i = 1; !is_valid (ELP[i-1]); i ++) if (i == subsystems_amount) return DECODING_FAILURE;
+    //for (int i = 1; !is_valid (ELP[i-1]); i ++) if (i == subsystems_amount) return DECODING_FAILURE;
 
     for (int i = 0; !is_valid (ELP[0]) && i < subsystems_amount; i ++) ELP [0] = ELP [i];
     for (int i = 1; i < subsystems_amount; i ++) if (is_valid (ELP[i]) && ELP [i].deg() > ELP [0].deg()) ELP [0] = ELP [i];
@@ -341,17 +347,20 @@ int BCH::collaborative_decoder (std::vector<int*>& error, int l)
         //printf ("line[%d]: ", i);
         for (int j = 0; j < n; j ++)
         {
-            if (ELP[0] ((*a)^(gf -> size()  - j)) == galois::GaloisFieldElement (gf, 0)) {}//printf ("\033[34m%d\033[0m", error [i][j]);
+            if (ELP[0] ((*a)^(gf -> size()  - j)) == galois::GaloisFieldElement (gf, 0)) 
+                if (error [i][j] == 0 ) printf ("\033[34m%d\033[0m", error [i][j]);
+                else printf ("\033[32m%d\033[0m", error [i][j]);
 
             else 
             {
-                if (error [i][j] == 1) return DECODING_ERROR;
-                else {}//std::cout << error [i][j];
+                if (error [i][j] == 1) {printf ("\033[31m%d\033[0m", error [i][j]);}//return DECODING_ERROR;
+                else std::cout << error [i][j];
             } 
         }
-        if (is_valid (ELP[0])) {}//printf (" val");
-        //printf ("\n");
+        if (is_valid (ELP[0])) printf (" val");
+        printf ("\n");
     }
+    
     return DECODING_SUCCESS;
 }   
 
