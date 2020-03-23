@@ -6,11 +6,11 @@
 #include <cstdlib>
 
 
-const int N = 31;
-const int M = 5;
-const int K = 21;
-const int L = 70; 
-const int T = (N - K)*L / (L + 1) * 2;
+const int N = 127;
+const int M = 7;
+const int K = 103;
+const int L = 200;
+const int T = (N - K)*L / (L + 1);
 
 inline int hamm_dist (int * w, int size)
 {
@@ -49,22 +49,24 @@ int main ()
     }
 
     
-    for (int i = 0; i < L; i ++)
+   /* for (int i = 0; i < L; i ++)
     {
         int k = 0;
         for (int j = 0; j < N; j ++)
         {
             if (j == loc[i/(L/2)] [k] && k < T) 
             {
-                //printf ("\033[31m%d\033[0m", errv [i][j] );
-                while (loc[i%(L/2)][k] == loc [i/(L/2)][k + 1]) k ++; k++;
+                printf ("\033[31m%d\033[0m", errv [i][j] );
+                //while (loc[i%(L/2)][k] == loc [i/(L/2)][k + 1]) k ++; k++;
             }
-            //else printf ("%d", errv [i][j]);
+            else printf ("%d", errv [i][j]);
         }
-       // printf ("\n");
-    }
+        printf ("\n");
 
+        
+    }*/
 
+    code.collaborative_decoder (errv, L);
     //printf ("result of decoding is %d", code.collaborative_decoder (errv, L));
     
     return 0;
